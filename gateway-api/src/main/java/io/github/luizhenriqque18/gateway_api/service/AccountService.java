@@ -31,4 +31,8 @@ public class AccountService {
             }
         }
     }
+
+    public Account findByAPIKey(String apiKey) {
+        return this.repository.findByAPIKey(apiKey);
+    }
 }

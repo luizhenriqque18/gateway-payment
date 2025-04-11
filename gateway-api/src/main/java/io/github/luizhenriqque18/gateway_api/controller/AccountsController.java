@@ -5,15 +5,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import io.github.luizhenriqque18.gateway_api.domain.Account;
 import io.github.luizhenriqque18.gateway_api.dto.AccountDTO;
+import io.github.luizhenriqque18.gateway_api.dto.ResponseGateway;
 import io.github.luizhenriqque18.gateway_api.service.AccountService;
 import jakarta.validation.Valid;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @RequestMapping("/api/v1/accounts")
@@ -30,7 +31,25 @@ public class AccountsController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<String>> list() {
-        return ResponseEntity.ok(List.of("Account 1", "Account 2"));
+    public ResponseEntity<ResponseGateway<AccountDTO>> list(
+        @RequestHeader(value = "X-API-Key", required = false) String apiKey
+    ) {
+        ResponseGateway<AccountDTO> response = new ResponseGateway<>("Account", null);
+
+        if (apiKey == null) {
+            response.setMessage("API Key not provided");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        Account account = service.findByAPIKey(apiKey);
+
+        if (account == null) {
+            response.setMessage("Account not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+
+        response.setData(AccountDTO.fromAccountDTO(account));
+
+        return ResponseEntity.ok(response);
     }
 }
